@@ -1,6 +1,7 @@
 name: Validate Windows build and regressions
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
   push:
