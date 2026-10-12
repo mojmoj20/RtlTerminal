@@ -470,8 +470,29 @@ public sealed class TerminalBuffer
 
         var capability = payload[2..];
 
-        if (capability.Length > 0)
+        if (IsValidXtgettcapQuery(capability))
             QueueResponse($"\x1bP0+r{capability}\x1b\\");
+    }
+
+    private static bool IsValidXtgettcapQuery(string capability)
+    {
+        if (string.IsNullOrEmpty(capability) || capability.Length > 256)
+            return false;
+
+        var parts = capability.Split(';');
+        foreach (var part in parts)
+        {
+            if (part.Length == 0 || part.Length % 2 != 0)
+                return false;
+
+            foreach (var ch in part)
+            {
+                if (!((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F')))
+                    return false;
+            }
+        }
+
+        return true;
     }
 
     private static string FormatOscColor(TerminalColor color) =>

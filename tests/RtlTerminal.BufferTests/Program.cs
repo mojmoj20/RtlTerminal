@@ -16,7 +16,8 @@ var tests = new (string Name, Action Run)[]
     ("style changes preserve pending autowrap", StylePreservesWrap),
     ("status redraw clears old characters across reads", StatusRedraw),
     ("wide characters can be erased and overwritten", WideErase),
-    ("snapshot rows are reused without hiding edits", SnapshotReuse)
+    ("snapshot rows are reused without hiding edits", SnapshotReuse),
+    ("malicious XTGETTCAP control sequences are rejected", MaliciousXtgettcapPayloadsAreRejected)
 };
 
 var failures = new List<string>();
@@ -283,6 +284,21 @@ static void SnapshotReuse()
     Assert(Text(resized).StartsWith("new"), "resize reused stale cells");
     var restored = buffer.Process("\x1b[?1049l");
     Assert(!Text(restored).Contains("unchanged"), "alternate screen cache leaked into main screen");
+}
+
+static void MaliciousXtgettcapPayloadsAreRejected()
+{
+    var buffer = new TerminalBuffer(30, 6);
+    var snapshot = buffer.Process(
+        "\x1bP+q\r\ncalc.exe\r\n\x1b\\" +
+        "\x1bP+q4d73;\r\nwhoami\x1b\\" +
+        "\x1bP+qinvalid_non_hex\x1b\\" +
+        "\x1bP+q4d73\x1b\\");
+
+    Assert(!snapshot.Responses.Any(r => r.Contains("calc.exe") || r.Contains("whoami") || r.Contains("invalid_non_hex")),
+        "malicious XTGETTCAP payload was reflected into responses");
+    Assert(snapshot.Responses.Any(r => r == "\x1bP0+r4d73\x1b\\"),
+        "valid XTGETTCAP capability query response is missing");
 }
 
 static string Text(TerminalSnapshot snapshot) => string.Join(

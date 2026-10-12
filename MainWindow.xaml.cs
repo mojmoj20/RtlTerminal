@@ -1480,14 +1480,26 @@ _activeTab.RenderedSmartRtlEnabled = _renderedSmartRtlEnabled;
             return;
 
         if (_lastRenderedSnapshot?.Modes.BracketedPaste == true)
-            _session.Write($"\x1b[200~{text}\x1b[201~");
+        {
+            var sanitized = text.Replace("\x1b[201~", string.Empty);
+            _session.Write($"\x1b[200~{sanitized}\x1b[201~");
+        }
         else
+        {
             _session.Write(text);
+        }
     }
 
     private string FormatClipboardPath(string path)
     {
-        return Path.GetFullPath(path);
+        var fullPath = Path.GetFullPath(path);
+
+        if (fullPath.Contains(' ') || fullPath.IndexOfAny(['&', '|', ';', '(', ')', '<', '>', '^']) >= 0)
+        {
+            return $"\"{fullPath.Replace("\"", "\\\"")}\"";
+        }
+
+        return fullPath;
     }
 
     private string? SaveClipboardImage()
