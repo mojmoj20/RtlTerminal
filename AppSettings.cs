@@ -159,4 +159,18 @@ public static class AppSettings
             RegistryValueKind.DWord);
     }
 
+    public static bool LoadSmartRtl()
+    {
+        using var key = Registry.CurrentUser.OpenSubKey(SettingsKey);
+        return key?.GetValue("SmartRtl") is int value && value == 1;
+    }
+
+    public static void SaveSmartRtl(bool enabled)
+    {
+        using var key = Registry.CurrentUser.CreateSubKey(SettingsKey);
+        key.SetValue(
+            "SmartRtl",
+            enabled ? 1 : 0,
+            RegistryValueKind.DWord);
+    }
 }

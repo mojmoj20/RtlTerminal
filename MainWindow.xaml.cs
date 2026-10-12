@@ -39,7 +39,7 @@ public partial class MainWindow : Window
     private bool _followOutput = true;
     private bool _restoringScrollPosition;
     private int _nextTabNumber = 1;
-    private bool _renderedSmartRtlEnabled = true;
+    private bool _renderedSmartRtlEnabled;
     private TerminalProfile _defaultProfile = TerminalProfile.CommandPrompt;
     private int _historySize = 2000;
     private bool _updateCheckInProgress;
@@ -56,7 +56,7 @@ public partial class MainWindow : Window
             catch (Exception exception)
             { MessageBox.Show(this, exception.Message, "Open link", MessageBoxButton.OK, MessageBoxImage.Error); }
         };
-        SmartRtlMenuItem.IsChecked = true;
+        SmartRtlMenuItem.IsChecked = AppSettings.LoadSmartRtl();
         _renderTimer = new DispatcherTimer(DispatcherPriority.Background)
         {
             Interval = TimeSpan.FromMilliseconds(16)
@@ -579,6 +579,8 @@ ApplySavedFontSettings();
 
     private void SmartRtlMenuItem_Changed(object sender, RoutedEventArgs e)
     {
+        AppSettings.SaveSmartRtl(SmartRtlMenuItem.IsChecked);
+
         if (_lastRenderedSnapshot is not null)
             Render(_lastRenderedSnapshot);
 
@@ -1821,7 +1823,7 @@ _activeTab.RenderedSmartRtlEnabled = _renderedSmartRtlEnabled;
         public long LatestQueuedRevision { get; set; }
         public TerminalSnapshot? LastRenderedSnapshot { get; set; }
         public ((int Row, int Offset)? Anchor, (int Row, int Offset)? End) Selection { get; set; }
-        public bool RenderedSmartRtlEnabled { get; set; } = true;
+        public bool RenderedSmartRtlEnabled { get; set; }
         public bool FollowOutput { get; set; } = true;
         public (short Columns, short Rows) GridSize { get; set; }
         public double VerticalOffset { get; set; }
